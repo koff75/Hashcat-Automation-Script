@@ -101,7 +101,3 @@ MASKS=(
   Vérifiez que votre matériel supporte les paramètres utilisés (GPU, CPU). Vous pouvez ajuster les options dans la commande Hashcat (`-D`, `-w`, etc.).  
 - **Le fichier de verrouillage bloque l'exécution :**  
   Supprimez manuellement le fichier `/tmp/hashcat.lock` si nécessaire.  
-
-
-
-Ce README est structuré pour être clair et professionnel tout en détaillant les aspects importants de ton projet. Ajoute ton **pseudo GitHub** ou ton **nom** pour personnaliser davantage !
