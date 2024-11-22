@@ -1,10 +1,3 @@
-# Hashcat-Automation-Script
-Outil d’automatisation pour le craquage de mots de passe
-
-Voici un exemple de **README** professionnel et complet que tu peux utiliser pour ton projet GitHub :  
-
----
-
 # Hashcat Automation Script  
 
 ## Description  
