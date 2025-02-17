@@ -1,3 +1,35 @@
+# Table des Matières  
+
+- [Description](#description)  
+- [Fonctionnalités](#fonctionnalités)  
+- [Prérequis](#prérequis)  
+- [Installation](#installation)  
+- [Usage](#usage)  
+  - [Exemple](#exemple)  
+  - [Suivi en temps réel](#suivi-en-temps-réel)  
+- [Organisation du code](#organisation-du-code)  
+  - [Structure du script](#structure-du-script)  
+  - [Fichiers générés](#fichiers-générés)  
+- [Personnalisation](#personnalisation)  
+  - [Ajouter de nouveaux dictionnaires](#ajouter-de-nouveaux-dictionnaires)  
+  - [Ajouter de nouvelles règles](#ajouter-de-nouvelles-règles)  
+  - [Modifier les masques](#modifier-les-masques)  
+- [Résolution des problèmes](#résolution-des-problèmes)  
+- [Stratégie à adopter](#stratégie-à-adopter)  
+  - [Wordlist générale (rockyou)](#1-wordlist-générale-rockyou)  
+  - [Chiffres simples (PIN ou clés par défaut)](#2-chiffres-simples-pin-ou-clés-par-défaut)  
+  - [Wordlist française spécifique (Wi-Fi)](#3-wordlist-française-spécifique-wi-fi)  
+  - [Optimisation matérielle](#4-optimisation-matérielle)  
+  - [Attaques avancées avec règles (Pantagrule)](#5-attaques-avancées-avec-règles-pantagrule)  
+  - [Tests exhaustifs (Brute force ciblée)](#6-tests-exhaustifs-brute-force-ciblée)  
+  - [Résumé](#résumé)  
+- [Wordlists intéressantes dans SecLists](#wordlists-intéressants-dans-seclists)  
+  - [Wordlists générales](#wordlists-générales)  
+  - [Wordlists spécifiques Wi-Fi](#wordlists-spécifiques-wi-fi)  
+- [Différence entre Pantagrule et Best64](#différence-entre-pantagrule-et-best64)  
+  - [Comparaison des utilisations](#comparaison-des-utilisations)  
+
+
 # Hashcat Automation Script  
 
 ## Description  
@@ -100,4 +132,169 @@ MASKS=(
 - **Hashcat affiche une erreur ou s'arrête :**  
   Vérifiez que votre matériel supporte les paramètres utilisés (GPU, CPU). Vous pouvez ajuster les options dans la commande Hashcat (`-D`, `-w`, etc.).  
 - **Le fichier de verrouillage bloque l'exécution :**  
-  Supprimez manuellement le fichier `/tmp/hashcat.lock` si nécessaire.  
+  Supprimez manuellement le fichier `/tmp/hashcat.lock` si nécessaire.
+
+# Stratégie à adopter
+### **1\. Wordlist générale (rockyou)**
+
+Utilise d'abord un dictionnaire simple pour tester les mots de passe les plus probables.
+
+```
+hashcat -m 22000 -a 0 hash.22000 rockyou.txt --status --status-timer=60
+```
+
+*Exemple :* Teste `password123` et variantes communes.
+
+---
+
+### **2\. Chiffres simples (PIN ou clés par défaut)**
+
+Teste les mots de passe composés uniquement de chiffres sur 8 caractères (standards de box).
+
+```
+hashcat -m 22000 -a 3 hash.22000 ?d?d?d?d?d?d?d?d --increment
+```
+
+*Exemple :* Teste `12345678`, `87654321`.
+
+---
+
+### **3\. Wordlist française spécifique (Wi-Fi)**
+
+Prépare une wordlist combinant noms courants en France, box internet (Free, SFR, etc.), et chiffres.
+
+```
+hashcat -m 22000 -a 1 hash.22000 noms_box_fr.txt num_4_digits.txt
+```
+
+*Exemple :* Teste `Freebox2021`, `Livebox1234`.
+
+Fichier `noms_box_fr.txt` (exemple) :
+
+```
+Freebox
+Livebox
+Bbox
+Waya
+```
+
+---
+
+### **4\. Optimisation matérielle**
+
+Ajoute systématiquement les options d’optimisation pour gagner en performance.
+
+```
+hashcat -w 4 -O -m 22000 hash.22000 rockyou.txt
+```
+
+*Exemple :* Priorise la vitesse sur les GPU modernes en désactivant certaines limites.
+
+**Astuce :** À appliquer pour toutes les commandes sauf en cas de crash ou limitation matérielle.
+
+---
+
+### **5\. Attaques avancées avec règles (Pantagrule)**
+
+Utilise des règles puissantes pour des mutations complexes après les tests simples.
+
+```
+hashcat -m 22000 -a 0 hash.22000 wordlist_fr.txt -r /path/to/pantagrule/pantagrule.rule
+```
+
+*Exemple :* Transforme `password` en `P@ssw0rd123`.
+
+---
+
+### **6\. Tests exhaustifs (Brute force ciblée)**
+
+Teste les structures spécifiques comme une clé générée automatiquement :
+
+```
+hashcat -m 22000 -a 3 hash.22000 ?u?l?l?d?d?d?d
+```
+
+*Exemple :* `Abc12345`.
+
+---
+
+### **Résumé**
+
+6. **Toujours commencer simple** : wordlists générales, chiffres.  
+7. **Progressivement augmenter la complexité** : hybrides et règles.  
+8. **Optimisation matérielle essentielle à chaque étape** pour des performances maximales.
+
+---
+
+### **Wordlists intéressants dans SecLists**
+
+Voici quelques wordlists spécifiques de [SecLists](https://github.com/danielmiessler/SecLists) qui peuvent être utiles pour WPA/WPA2 :
+
+#### **Wordlists générales :**
+
+1. **Passwords/common.txt**
+
+   - Les mots de passe les plus courants, très efficace pour tester rapidement.  
+   - *Exemple* : `123456`, `password`, `admin`.  
+2. **Passwords/xato-net-10-million-passwords.txt**
+
+   - 10 millions de mots de passe basés sur des fuites réelles.  
+   - *Exemple* : `qwerty123`, `sunshine2022`.
+
+#### **Wordlists spécifiques Wi-Fi :**
+
+3. **Passwords/Wi-Fi/Common-WiFi-WPA2-Passphrases.txt**
+
+   - Ciblé pour les SSID de box et mots de passe par défaut.  
+   - *Exemple* : `freebox1234`, `livebox5678`.  
+4. **Passwords/darkweb2017-top10000.txt**
+
+   - Basé sur les leaks des bases de données du dark web.  
+   - *Exemple* : `hunter2`, `iloveyou`.  
+5. **Usernames/top-usernames-shortlist.txt \+ Numéros**
+
+   - Combinez cette liste avec des chiffres (hybride `-a1`).  
+   - *Exemple* : `admin1234`, `user2023`.
+
+---
+
+### **Différence entre Pantagrule et Best64**
+
+#### **Pantagrule :**
+
+- Une des règles les plus complexes pour *hashcat*, issue de transformations des attaques les plus efficaces.  
+- Utilise des mutations avancées comme :  
+  - Substitutions (`a` → `@`, `o` → `0`).  
+  - Ajouts (`123`, `!`).  
+  - Combinaisons dynamiques.  
+- **Objectif** : Tester un grand nombre de permutations en peu de temps.  
+- *Exemple transformation* :  
+  - Entrée : `password`  
+  - Sortie : `P@ssw0rd!123`
+
+#### **Best64 :**
+
+- Une règle plus légère et rapide, orientée vers les transformations les plus communes.  
+- Adaptée pour des ressources limitées ou un premier passage rapide.  
+- **Objectif** : Moins de transformations mais haut taux de réussite sur des mots de passe simples.  
+- *Exemple transformation* :  
+  - Entrée : `admin`  
+  - Sortie : `admin123`
+
+---
+
+### **Comparaison des utilisations**
+
+| Critère | Pantagrule | Best64 |
+| :---- | :---- | :---- |
+| **Complexité** | Élevée | Faible |
+| **Nombre de règles** | \~1 million | \~64 |
+| **Performance** | Nécessite un GPU performant | Rapide sur tout système |
+| **Cas d’usage** | Longues attaques avancées | Tests rapides |
+
+---
+
+**Recommandation** :
+
+- **Pantagrule** : Utiliser après avoir testé avec des règles simples comme Best64 ou dans une attaque finale.  
+- **Best64** : Toujours commencer par celle-ci pour identifier rapidement les mots de passe faibles.
